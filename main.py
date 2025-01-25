@@ -70,7 +70,7 @@ def component_from_variants():
 
                 with progress_col:
                     bar = CircularProgress(
-                        label="",
+                        label=f"{variant.count}",
                         size="small",
                         value=int(variant.percentage * 100),
                         color="#007aff",
@@ -78,19 +78,11 @@ def component_from_variants():
                     )
                     bar.st_circular_progress()
                 with trace_col:
-                    # html_trace = "<nav style='display: inline-block; white-space: nowrap; font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #ddd;'>" + " ➔ ".join(
-                    #     [f"<span style='color: #007bff; text-decoration: none; padding: 0 4px;'>{event.activity}</span>"
-                    #      for event in variant.trace]) + "</nav>"
-                    # st.markdown(html_trace, unsafe_allow_html=True)
                     for _ in range(4):
                         st.text('')
                     st.markdown(" ➔ ".join([f'[{event.activity}]' for event in variant.trace]))
 
                 st.divider()
-
-
-def on_selected_object_types_changed():
-    print(st.session_state.selected_object_types)
 
 
 def main():
@@ -112,6 +104,11 @@ def main():
     if file:
         ocel = load_ocel(file)
         st.session_state.available_object_types = list(ocel.log.object_types)
+
+    if ocel:
+        with st.expander(f"Show raw logs ({ocel.log.log.shape[0]} events)"):
+            st.dataframe(utils.convert_dataframe_to_strings(ocel.log.log), use_container_width=True)
+
     # Body Layout
     col_left, col_right = st.columns([3, 2])
 

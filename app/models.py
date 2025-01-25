@@ -23,6 +23,7 @@ class Trace(list):
 class Variant:
     trace: Trace
     percentage: float = 0.0
+    count: int = 0
 
 
 class Cases:
@@ -52,7 +53,11 @@ class Cases:
         variants = defaultdict(list)
         for object_type, type_variants in self._variant_count.items():
             for key, value in type_variants.items():
-                variant = Variant(trace=value[0], percentage=len(value) / len(self.cases[object_type]))
+                variant = Variant(
+                    trace=value[0],
+                    percentage=len(value) / len(self.cases[object_type]),
+                    count=len(value)
+                )
                 variants[object_type].append(variant)
 
         self._variants = variants

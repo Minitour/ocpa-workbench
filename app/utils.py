@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 
+import pandas as pd
 from ocpa.objects.log.ocel import OCEL
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from ocpa.algo.discovery.ocpn import algorithm as ocpn_discovery_factory
@@ -41,3 +42,22 @@ def get_petri_net(ocel: OCEL, include_object_types: list[str] = None, activity_f
 
 def get_object_types(ocel: OCEL):
     return ocel.log.object_types
+
+def convert_dataframe_to_strings(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Converts all data types in a DataFrame to strings.
+    If a value is a list, it joins the elements using commas.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        pd.DataFrame: The DataFrame with all values converted to strings.
+    """
+    def convert_value(value):
+        if isinstance(value, list):
+            return ','.join(map(str, value))
+        return str(value)
+
+    # Apply the conversion to the entire DataFrame
+    return df.applymap(convert_value)
