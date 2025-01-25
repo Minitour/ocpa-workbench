@@ -95,7 +95,7 @@ def on_selected_object_types_changed():
 
 def main():
     # Streamlit app
-    st.set_page_config(layout="wide")
+    st.set_page_config(page_title="OCPA Workbench", page_icon=":material/sync_alt:", layout="wide")
     st.title("OCPA Workbench")
 
     if 'available_object_types' not in st.session_state:
