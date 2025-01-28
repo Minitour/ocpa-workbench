@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 from ocpa.objects.log.importer.ocel2.xml import factory as ocel_import_factory
 from ocpa.objects.log.ocel import OCEL
@@ -65,30 +66,33 @@ def component_from_variants():
     tabs = st.tabs(list(variants.keys()))
     for tab, object_type in zip(tabs, variants.keys()):
         with (tab):
-            for variant in variants[object_type]:
-                progress_col, trace_col = st.columns([1, 10])
-
-                with progress_col:
-                    bar = CircularProgress(
-                        label=f"{variant.count}",
-                        size="small",
-                        value=int(variant.percentage * 100),
-                        color="#007aff",
-                        key=f"{object_type}_{variant.trace.get_trace_hash()}"
-                    )
-                    bar.st_circular_progress()
-                with trace_col:
-                    for _ in range(4):
-                        st.text('')
-                    st.markdown(" ➔ ".join([f'[{event.activity}]' for event in variant.trace]))
-
-                st.divider()
+            data = [
+                {
+                    'percentage': variant.percentage * 100,
+                    'count': variant.count,
+                    'text': " ➔ ".join([f'[{event.activity}]' for event in variant.trace])
+                }
+                for variant in variants[object_type]
+            ]
+            st.dataframe(
+                pd.DataFrame(data),
+                column_config={
+                    'percentage': st.column_config.ProgressColumn(
+                        format="%.2f%%", width='small', label='Percentage', min_value=0, max_value=100
+                    ),
+                    'count': st.column_config.NumberColumn(width='small', label='Count'),
+                    'text': st.column_config.TextColumn(width='large', label='Trace')
+                },
+                hide_index=True,
+                use_container_width=True
+            )
 
 
 def main():
     # Streamlit app
     st.set_page_config(page_title="OCPA Workbench", page_icon=":material/sync_alt:", layout="wide")
     st.title("OCPA Workbench")
+
 
     if 'available_object_types' not in st.session_state:
         st.session_state.available_object_types = []
@@ -107,7 +111,14 @@ def main():
 
     if ocel:
         with st.expander(f"Show raw logs ({ocel.log.log.shape[0]} events)"):
-            st.dataframe(utils.convert_dataframe_to_strings(ocel.log.log), use_container_width=True)
+            st.dataframe(
+                utils.convert_dataframe_to_strings(ocel.log.log),
+                column_config={
+                    'event_timestamp': st.column_config.DatetimeColumn()
+                },
+                use_container_width=True,
+                hide_index=True
+            )
 
     # Body Layout
     col_left, col_right = st.columns([3, 2])
