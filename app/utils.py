@@ -17,6 +17,16 @@ def safe_get(session, attr: str):
         return None
 
 
+def safe_execute(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return None
+
+    return wrapper
+
+
 def get_local_file(file: UploadedFile | None) -> Path | None:
     """
     Get local file path from uploaded file. This uploads the file into a temp directory and returns the local path.
@@ -36,8 +46,7 @@ def get_petri_net(ocel: OCEL, include_object_types: list[str] = None, activity_f
         ocel,
         parameters={
             "debug": False,
-            'include_object_types': include_object_types,
-            'activity_threshold': float(1 - activity_filter / 100),
+            'include_object_types': include_object_types
         }
     )
 

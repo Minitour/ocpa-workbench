@@ -8,12 +8,29 @@ from ocpa.objects.log.ocel import OCEL
 
 @dataclass
 class Event:
+    """
+    Represents an event in a process.
+    
+    The `Event` class is a data structure that encapsulates the details of a process
+    event, including its activity name, timestamp, and the associated objects.
+    It is used as a fundamental unit to describe the behavior of processes in an OCEL
+    (Object-Centric Event Log).
+    """
     activity: str
     timestamp: datetime
     objects: dict[str, list[str]]
 
 
 class Trace(list):
+    """
+    Represents a sequence of events (a trace) in a process.
+
+    The `Trace` class extends the built-in `list` class and is used to store
+    a series of events, typically representing a single execution or instance
+    of a process flow. It includes methods for generating unique hashes for
+    the trace, creating a directly follows graph representation in Graphviz
+    syntax, and comparing traces.
+    """
 
     def get_trace_hash(self):
         return hash(tuple([e.activity for e in self]))
@@ -53,8 +70,16 @@ class Trace(list):
             return False
         return self.get_case_hash() == other.get_case_hash()
 
+
 @dataclass
 class Variant:
+    """
+    Represents a variant with associated trace, percentage, and count.
+
+    This class is used to encapsulate the details of a specific variant,
+    including its trace information, a percentage value (typically representing
+    a relative metric), and a count (representing occurrences or instances).
+    """
     trace: Trace
     percentage: float = 0.0
     count: int = 0
@@ -63,7 +88,9 @@ class Variant:
 def _default_dict_of(dtype):
     def func():
         return defaultdict(dtype)
+
     return func
+
 
 def _default_dict_of_trace():
     return defaultdict(Trace)
@@ -74,6 +101,14 @@ def _default_dict_of_list():
 
 
 class Cases:
+    """
+    Represents cases in an Object-Centric Event Log (OCEL).
+
+    The `Cases` class is responsible for managing and analyzing cases extracted
+    from an OCEL. It processes events to group them by associated objects, generates
+    variants based on traces, and provides insights like unique object counts,
+    object collections by variants, and traces by variants.
+    """
 
     def __init__(self, ocel: OCEL):
         self._ocel = ocel
@@ -117,6 +152,9 @@ class Cases:
     @property
     def objects(self):
         return self._objects
+
+    def unique_object_count(self) -> dict[str, int]:
+        return {k: len(v) for k, v in self.cases_by_object.items()}
 
     def get_traces_by_variant(self, object_type: str, variant: Variant) -> list[Trace]:
         return list(self._variant_count[object_type][variant.trace.get_trace_hash()])
