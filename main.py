@@ -85,7 +85,7 @@ def variants_component():
                 key = f"{object_type}_{variant.trace.get_trace_hash()}"
                 col1, col2, col3 = st.columns([1, 4, 1])
                 with col1:
-                    st.progress(variant.percentage, text=f"{variant.count} traces")
+                    st.progress(variant.percentage, text=f"{variant.percentage * 100:.2f}% ({variant.count} traces)")
                 with col2:
                     # st.write(" ➔ ".join([f'[{event.activity}]' for event in variant.trace]))
                     st.graphviz_chart(variant.trace.directly_follows_graph(), use_container_width=True)
