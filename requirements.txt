@@ -1,3 +1,4 @@
 streamlit==1.41.1
-st-circular-progress==0.3.9
+streamlit-modal==0.1.2
+streamlit-tags==1.2.8
 git+https://github.com/Minitour/ocpa.git@ba14b0db5b00624eae2e6b063547a8a1c1d66444

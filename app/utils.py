@@ -10,6 +10,13 @@ from ocpa.visualization.oc_petri_net import factory as ocpn_vis_factory
 temp_dir = tempfile.TemporaryDirectory()
 
 
+def safe_get(session, attr: str):
+    try:
+        return session[attr]
+    except:
+        return None
+
+
 def get_local_file(file: UploadedFile | None) -> Path | None:
     """
     Get local file path from uploaded file. This uploads the file into a temp directory and returns the local path.
@@ -25,7 +32,6 @@ def get_local_file(file: UploadedFile | None) -> Path | None:
 
 
 def get_petri_net(ocel: OCEL, include_object_types: list[str] = None, activity_filter: int = 100):
-    print(include_object_types)
     petri_net = ocpn_discovery_factory.apply(
         ocel,
         parameters={
@@ -36,12 +42,13 @@ def get_petri_net(ocel: OCEL, include_object_types: list[str] = None, activity_f
     )
 
     # create graphiz Digraph object
-    petri_net_graph = ocpn_vis_factory.apply(petri_net, parameters={"bgcolor": 'white'})
+    petri_net_graph = ocpn_vis_factory.apply(petri_net)
     return petri_net_graph
 
 
 def get_object_types(ocel: OCEL):
     return ocel.log.object_types
+
 
 def convert_dataframe_to_strings(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -54,10 +61,11 @@ def convert_dataframe_to_strings(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The DataFrame with all values converted to strings.
     """
+
     def convert_value(value):
         if isinstance(value, list):
             return ','.join(map(str, value))
         return str(value)
 
     # Apply the conversion to the entire DataFrame
-    return df.applymap(convert_value)
+    return df.map(convert_value)
