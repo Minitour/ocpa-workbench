@@ -4,7 +4,6 @@ from ocpa.objects.log.importer.csv.util import clean_normalized_frequency
 from ocpa.objects.log.importer.ocel2.xml import factory as ocel_import_factory
 from ocpa.objects.log.ocel import OCEL
 from streamlit_modal import Modal
-from streamlit_tags import st_tags
 
 from app import utils
 from app.models import Cases, Variant
@@ -13,7 +12,6 @@ from app.utils import safe_execute
 
 @st.cache_data
 def load_ocel(file):
-    reset_states()
     file_path = utils.get_local_file(file)
     ocel = ocel_import_factory.apply(str(file_path))
     ocel.log.log.sort_values('event_timestamp', inplace=True)
@@ -102,18 +100,18 @@ def variants_component():
 @safe_execute
 def reset_states():
     states = [
-        'selected_object_types',
-        'selected_object_instances',
-        'selected_variant',
-        'object_type',
-        'available_object_types',
-        'petri_net_graph',
-        'variants'
+        ('selected_object_types', []),
+        ('selected_object_instances', []),
+        ('selected_variant', None),
+        ('object_type', None),
+        ('available_object_types', []),
+        ('petri_net_graph', None),
+        ('variants', None)
     ]
 
-    for state in states:
+    for state, default_value in states:
         if utils.safe_get(st.session_state, state):
-            st.session_state[state] = None
+            st.session_state[state] = default_value
 
 
 # filter
@@ -122,6 +120,7 @@ def apply_filters(dataframe_pointer):
     """
     Apply filters on dataframe from session state.
     """
+    print('apply filters')
     if selected_object_types := utils.safe_get(st.session_state, 'selected_object_types'):
         dataframe_pointer.drop(
             dataframe_pointer[~dataframe_pointer[selected_object_types].any(axis=1)].index, inplace=True
@@ -165,16 +164,28 @@ def main():
         st.session_state.petri_net_graph = None
     if 'variants' not in st.session_state:
         st.session_state.variants = None
+    if 'selected_object_instances' not in st.session_state:
+        st.session_state.selected_object_instances = []
+    if 'file_name' not in st.session_state:
+        st.session_state.file_name = None
 
     file = st.file_uploader("Upload a new Log:", type="xml")
 
     if not file:
         return
 
+    if st.session_state.file_name != file.name:
+        reset_states()
+        st.session_state.file_name = file.name
+
     # Prepare Data
-    ocel, cases, original_dataframe = load_ocel(file)
-    dataframe_pointer = ocel.log.log
-    st.session_state.available_object_types = list(ocel.log.object_types)
+    try:
+        ocel, cases, original_dataframe = load_ocel(file)
+        dataframe_pointer = ocel.log.log
+        st.session_state.available_object_types = list(ocel.log.object_types)
+    except Exception as e:
+        st.error(f'Failed to load file. Please check the file format and try again. {e}')
+        return
 
     # Apply Filters
     apply_filters(dataframe_pointer)
@@ -219,12 +230,13 @@ def main():
             key="selected_object_types"
         )
 
-        st_tags(
-            label='Filter by object identifier', text='Press enter to add more',
-            value=[],
-            suggestions=list(cases.objects if cases else []),
+        st.multiselect(
+            'Filter by object identifier',
+            options=list(cases.objects if cases else []),
+            default=st.session_state.selected_object_instances or [],
             key='selected_object_instances'
         )
+
         st.slider(
             "Activity Importance Filter",
             min_value=1,
