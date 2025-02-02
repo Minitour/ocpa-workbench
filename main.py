@@ -120,7 +120,6 @@ def apply_filters(dataframe_pointer):
     """
     Apply filters on dataframe from session state.
     """
-    print('apply filters')
     if selected_object_types := utils.safe_get(st.session_state, 'selected_object_types'):
         dataframe_pointer.drop(
             dataframe_pointer[~dataframe_pointer[selected_object_types].any(axis=1)].index, inplace=True
@@ -232,7 +231,7 @@ def main():
 
         st.multiselect(
             'Filter by object identifier',
-            options=list(cases.objects if cases else []),
+            options=list((cases.objects if cases else set()).union(cases.unique_values)),
             default=st.session_state.selected_object_instances or [],
             key='selected_object_instances'
         )

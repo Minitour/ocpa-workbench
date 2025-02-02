@@ -113,8 +113,8 @@ class Cases:
     def __init__(self, ocel: OCEL):
         self._ocel = ocel
         self.cases_by_object = None
-        self._variants = None
-        self._variant_count = None
+        self._variants = None  # dict of list of variant
+        self._variant_count = None  # dict of dict of Trace
         self._objects = None
 
     def reload(self):
@@ -136,10 +136,11 @@ class Cases:
 
         variants = defaultdict(list)
         for object_type, type_variants in self._variant_count.items():
+            total = sum([len(variant) for variant in type_variants.values()])
             for key, value in type_variants.items():
                 variant = Variant(
                     trace=list(value)[0],
-                    percentage=len(value) / len(self.cases_by_object[object_type]),
+                    percentage=len(value) / total,
                     count=len(value)
                 )
                 variants[object_type].append(variant)
@@ -152,6 +153,22 @@ class Cases:
     @property
     def objects(self):
         return self._objects
+
+    @property
+    def unique_values(self):
+        def extract_values(item):
+            """Recursively extracts unique values from nested structures."""
+            if isinstance(item, (list, set, tuple)):
+                extracted = set()
+                for subitem in item:
+                    extracted.update(extract_values(subitem))
+                return extracted
+            return {item}
+
+        unique_values = set()
+        for value in self._ocel.log.log.values.flatten():
+            unique_values.update(extract_values(value) if isinstance(value, (list, set, tuple)) else {value})
+        return unique_values
 
     def unique_object_count(self) -> dict[str, int]:
         return {k: len(v) for k, v in self.cases_by_object.items()}
